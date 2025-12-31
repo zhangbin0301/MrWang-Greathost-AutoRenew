@@ -111,7 +111,7 @@ async function sendTelegramMessage(message) {
     }
 
     // 6. 执行续期
-    console.log("⚡ 正在调用续期接口...");
+    console.log("⚡ 正在调用续期接口...执行续期...");
     await renewBtn.click();
 
     // 等待接口返回并处理（源代码中使用了 fetch，这里等待页面响应）
@@ -127,17 +127,24 @@ async function sendTelegramMessage(message) {
     const afterHoursText = await page.textContent(timeSelector);
     const afterHours = parseInt(afterHoursText.replace(/[^0-9]/g, '')) || 0;
 
-    // 7. 最终通知
-    if (afterHours > beforeHours) {
-      await sendTelegramMessage(`🎉 <b>GreatHost 续期成功</b>\n🆔 ID: <code>${serverId}</code>\n⏰ 变化: ${beforeHours} ➔ ${afterHours}h`);
-    } else {
-      // 这里的逻辑：如果点完没加时间，可能是刚才读取 0h 的误判，或者真的没点成功
-      await sendTelegramMessage(`⚠️ <b>GreatHost 续期未增加</b>\n🆔 ID: <code>${serverId}</code>\n⏰ 保持: ${beforeHours}h\n💡 提示: 按钮已点，可能系统延迟或已达上限。`);
-    }
-
-  } catch (err) {
-    await sendTelegramMessage(`🚨 <b>GreatHost 脚本报错</b>\n<code>${err.message}</code>`);
-  } finally {
-    await browser.close();
-  }
+// === 7. 最终通知 ===
+if (afterHours > beforeHours) {
+    const message = `🎉 <b>GreatHost 续期成功</b>\n\n` +
+                    `🆔 <b>服务器ID:</b> <code>${serverId}</code>\n` +
+                    `⏰ <b>时间变化:</b> ${beforeHours} ➔ ${afterHours}h (+12h)\n` +
+                    `🚀 <b>服务器状态:</b> ${serverStarted ? '✅ 已触发启动' : '运行中'}\n` +
+                    `📅 <b>执行时间:</b> ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
+    
+    await sendTelegramMessage(message);
+    console.log("🎉 续期成功通知已发送");
+} else {
+    const message = `⚠️ <b>GreatHost 续期未生效</b>\n\n` +
+                    `🆔 <b>服务器ID:</b> <code>${serverId}</code>\n` +
+                    `⏰ <b>当前时间:</b> ${beforeHours}h\n` +
+                    `🚀 <b>服务器状态:</b> ${serverStarted ? '✅ 已触发启动' : '运行中'}\n` +
+                    `📅 <b>检查时间:</b> ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}\n` +
+                    `💡 <b>提示:</b> 时间未增加，请检查金币或手动确认。`;
+    
+    await sendTelegramMessage(message);
+}
 })();
