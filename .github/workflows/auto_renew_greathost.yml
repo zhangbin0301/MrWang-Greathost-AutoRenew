@@ -25,10 +25,10 @@ jobs:
 
       - name: Run renew script
         env:
-         EMAIL: ${{ secrets.GREATHOST_EMAIL }}
-         PASSWORD: ${{ secrets.GREATHOST_PASSWORD }}
-         TG_BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-         TG_CHAT_ID: ${{ secrets.CHAT_ID }}
+         GREATHOST_EMAIL: ${{ secrets.GREATHOST_EMAIL }}
+         GREATHOST_PASSWORD: ${{ secrets.GREATHOST_PASSWORD }}
+         BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+         CHAT_ID: ${{ secrets.CHAT_ID }}
          HEADLESS: 'true'
         run: npm start
 
