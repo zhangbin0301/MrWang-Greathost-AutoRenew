@@ -148,13 +148,18 @@ if (afterHours > beforeHours) {
     await sendTelegramMessage(message);
     console.log("🎉 续期成功通知已发送");
 } else {
-    const message = `⚠️ <b>GreatHost 续期未生效</b>\n\n` +
-                    `🆔 <b>服务器ID:</b> <code>${serverId}</code>\n` +
-                    `⏰ <b>当前时间:</b> ${beforeHours}h\n` +
-                    `🚀 <b>服务器状态:</b> ${serverStarted ? '✅ 已触发启动' : '运行中'}\n` +
-                    `📅 <b>检查时间:</b> ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}\n` +
-                    `💡 <b>提示:</b> 时间未增加，请检查金币或手动确认。`;
-    
-    await sendTelegramMessage(message);
-}
+      const message = `⚠️ <b>GreatHost 续期未生效</b>\n\n` +
+                      `🆔 <b>服务器ID:</b> <code>${serverId}</code>\n` +
+                      `⏰ <b>当前时间:</b> ${beforeHours}h\n` +
+                      `🚀 <b>服务器状态:</b> ${serverStarted ? '✅ 已触发启动' : '运行中'}\n` +
+                      `📅 <b>检查时间:</b> ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}\n` +
+                      `💡 <b>提示:</b> 时间未增加，请检查手动确认。`;
+      await sendTelegramMessage(message);
+    }  
+  } catch (err) {
+    console.error("❌ 运行时错误:", err.message);
+    await sendTelegramMessage(`🚨 <b>GreatHost 脚本报错</b>\n<code>${err.message}</code>`);
+  } finally {
+    await browser.close();
+  }
 })();
