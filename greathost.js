@@ -177,8 +177,8 @@ async function sendTelegramMessage(message) {
         const message = `🎉 <b>GreatHost 续期成功</b>\n\n` +
                         `🆔 <b>ID:</b> <code>${serverId}</code>\n` +
                         `⏰ <b>时间:</b> ${beforeHours} ➔ ${afterHours}h\n` +
-                        `🚀 <b>状态:</b> ${serverStarted ? '✅ 已触发启动' : '运行正常'}`;
-                        `📅 <b>执行时间:</b> ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
+                        `🚀 <b>状态:</b> ${serverStarted ? '✅ 已触发启动' : '运行正常'}\n` + 
+                        `📅 <b>执行时间:</b> ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`; 
         await sendTelegramMessage(message);
     } else if (isMaxedOut) {
         // 场景 B：因为满 120 小时而被拒绝（这就是你看到的 No puedes renovar...）
