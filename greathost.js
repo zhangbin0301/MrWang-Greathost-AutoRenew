@@ -248,14 +248,11 @@ async function sendTelegramMessage(message) {
                         `💡 <b>提示:</b> 时间未增加，请手动检查确认。`;            
         await sendTelegramMessage(message);    
         console.log(" 🚨 续期失败 🚨 ");
-    }  // 这里闭合的是 if/else 逻辑
-
-     } catch (err) {
-    // 这一块是必须的，万一前面登录或者点击报错了，这里能把错误发给你
+    }  
+     } catch (err) {    
        console.error(" ❌ 运行时错误 ❌ :", err.message);
        await sendTelegramMessage(` 🚨 <b>GreatHost 脚本报错</b> 🚨 \n<code>${err.message}</code>`);
-     } finally {
-    // 无论成功还是失败，最后都要关掉浏览器，否则会占用大量内存
+     } finally {    
        await browser.close();
      }
    })();
