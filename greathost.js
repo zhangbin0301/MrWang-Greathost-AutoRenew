@@ -221,8 +221,8 @@ async function sendTelegramMessage(message) {
         // 场景 A：续期成功
         const message = `🎉 <b>GreatHost 续期成功</b>\n\n` +
                         `🆔 <b>ID:</b> <code>${serverId}</code>\n` +
-                        `⏰ <b>时间:</b> ${beforeHours} ➔ ${afterHours}h\n` +
-                        `🚀 <b>状态:</b> ${serverStarted ? '✅ 已触发启动' : '运行正常'}\n` + 
+                        `⏰ <b>增加时间:</b> ${beforeHours} ➔ ${afterHours}h\n` +
+                        `🚀 <b>服务器状态:</b> ${serverStarted ? '✅ 已触发启动' : '运行正常'}\n` + 
                         `📅 <b>执行时间:</b> ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`; 
         await sendTelegramMessage(message);
         console.log(" ✅ 续期成功 ✅ ");
