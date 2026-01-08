@@ -32,7 +32,23 @@ async function sendTelegramMessage(message) {
       userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       viewport: { width: 1280, height: 720 }
   });
-  const page = await context.newPage();
+  const page = await context.newPage();  
+
+  // 抹除 Playwright 特征
+    await page.addInitScript(() => {
+        // 覆盖 webdriver 属性
+        Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+        // 模拟插件列表
+        Object.defineProperty(navigator, 'languages', { get: () => ['zh-CN', 'zh', 'en'] });
+        // 伪造 WebGL 指纹
+        const getParameter = WebGLRenderingContext.prototype.getParameter;
+        WebGLRenderingContext.prototype.getParameter = function(parameter) {
+            if (parameter === 37445) return 'Intel Inc.';
+            if (parameter === 37446) return 'Intel(R) Iris(TM) Plus Graphics 640';
+            return getParameter(parameter);
+        };
+    });
+  // 抹除 Playwright 特征  
 
   try {
     // === 1. 登录 ===
@@ -146,32 +162,57 @@ async function sendTelegramMessage(message) {
     return; // 结束脚本，不执行后面的点击操作
 }
     
-// === 10. 执行续期 (三保险强力点击) ===
-    console.log("⚡ 启动强力续期流程...");
+// === 10. 执行续期 (模拟真实用户行为版) ===
+    console.log("⚡ 启动模拟真人续期流程...");
 
     try {
-        // 第一保险：Playwright 物理点击
+        // 1. 模拟真人“看页面”：随机滚动一下滚动条
+        await page.mouse.wheel(0, Math.floor(Math.random() * 200));
+        console.log("👉 模拟页面滚动...");
+        
+        // 2. 随机发呆：停顿 2-5 秒，模仿人类思考/寻找按钮的时间
+        const thinkTime = Math.floor(Math.random() * 3000) + 2000;
+        await page.waitForTimeout(thinkTime);
+
+        // 3. 模拟鼠标平滑移动到按钮中心
+        const box = await renewBtn.boundingBox();
+        if (box) {
+            // 从当前位置平滑移动到按钮
+            await page.mouse.move(
+                box.x + box.width / 2 + (Math.random() * 10 - 5), // 加点随机偏差
+                box.y + box.height / 2 + (Math.random() * 10 - 5), 
+                { steps: 15 } // 分15步移动，产生平滑轨迹
+            );
+            console.log("👉 鼠标平滑轨迹模拟完成");
+        }
+
+        // 4. 执行“三保险”点击
+        // 第一保险：物理点击 (增加随机按键时长)
         await renewBtn.click({ 
             force: true, 
-            delay: 150, 
+            delay: Math.floor(Math.random() * 100) + 100, // 模拟按下和弹起的间隔
             timeout: 5000 
         });
-        console.log("👉 [1/3] 物理点击已尝试");
+        console.log("👉 [1/3] 物理点击已执行");
 
-        // 第二保险：DOM 事件注入
+        // 第二保险：DOM 事件注入 (仅在物理点击可能失效时兜底)
         await page.evaluate(() => {
             const btn = document.querySelector('#renew-free-server-btn');
             if (btn) {
-                btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-                btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-                btn.click();
+                // 模拟更完整的点击链路
+                ['mouseenter', 'mousedown', 'mouseup', 'click'].forEach(evt => {
+                    btn.dispatchEvent(new MouseEvent(evt, { bubbles: true, cancelable: true, view: window }));
+                });
             }
         });
-        console.log("👉 [2/3] 原生事件已注入");
+        console.log("👉 [2/3] 事件链路注入完成");
 
-        // 第三保险：逻辑函数强制调用
+        // 第三保险：逻辑函数直接调用
         await page.evaluate(() => {
-            if (typeof renewFreeServer === 'function') renewFreeServer();
+            if (typeof renewFreeServer === 'function') {
+                console.log("调用原生续期函数...");
+                renewFreeServer();
+            }
         }).catch(() => {});
         console.log("👉 [3/3] 函数触发检查完毕");
 
