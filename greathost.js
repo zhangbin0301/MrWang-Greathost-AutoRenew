@@ -2,7 +2,6 @@ const EMAIL = process.env.GREATHOST_EMAIL || '';
 const PASSWORD = process.env.GREATHOST_PASSWORD || '';
 const CHAT_ID = process.env.CHAT_ID || '';
 const BOT_TOKEN = process.env.BOT_TOKEN || '';
-
 // === 代理配置 (如果不需要代理，留空) ===
 const PROXY_URL = process.env.PROXY_URL || "";
 
