@@ -308,30 +308,30 @@ async function sendTelegramMessage(message) {
     // 发送消息
     await sendTelegramMessage(getReport(statusIcon, statusTitle, afterHours, tip));   
 
-  } catch (err) {
+    } catch (err) {
     console.error("❌ 脚本运行崩溃:", err.message);
-    
+
     if (!err.message.includes("Proxy Check Failed")) {
-        // 如果崩溃时已经定义了 getReport (即已经过了第 5 步)
-        if (typeof getReport === 'function') {
-            await sendTelegramMessage(getReport(
-    '🚨', 
-    '脚本运行报错', 
-    (typeof afterHours !== 'undefined' ? afterHours : (typeof beforeHours !== 'undefined' ? beforeHours : 0)), 
-    `错误详情: <code>${err.message}</code>`
-));
-        } else {
-            // 如果在定义 getReport 之前就崩溃了（如登录失败），使用简易报错
-            const errorDetail = `🚨 <b>GreatHost 脚本崩溃</b>\n\n` +
-                                `❌ <b>错误:</b> <code>${err.message}</code>\n` +
-                                `📅 <b>时间:</b> ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
-            await sendTelegramMessage(errorDetail);
-        }
-      } 
-    } finally {    
+
+      if (typeof getReport === 'function') {
+        await sendTelegramMessage(getReport(
+          '🚨',
+          '脚本运行报错',
+          (typeof afterHours !== 'undefined'
+            ? afterHours
+            : (typeof beforeHours !== 'undefined' ? beforeHours : 0)),
+          `错误详情: <code>${err.message}</code>`
+        ));
+      } else {
+        await sendTelegramMessage(errorDetail);
+      }
+
+    } 
+
+  } finally { 
     if (browser) {
-        console.log("🧹 [Exit] 正在关闭浏览器...");
-        await browser.close();
+      console.log("🧹 [Exit] 正在关闭浏览器...");
+      await browser.close();
     }
   }
 })();
