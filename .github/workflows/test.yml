@@ -30,7 +30,8 @@ jobs:
           GREATHOST_PASSWORD: ${{ secrets.GREATHOST_PASSWORD }}
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}          
-          ALL_PROXY: ${{ secrets.PROXY_URL }} 
+          PROXY_URL: ${{ secrets.PROXY_URL }}
+          
         run: npm start
 
       - name: Upload debug artifacts
