@@ -2,7 +2,7 @@ const EMAIL = process.env.GREATHOST_EMAIL || '';
 const PASSWORD = process.env.GREATHOST_PASSWORD || '';
 const CHAT_ID = process.env.CHAT_ID || '';
 const BOT_TOKEN = process.env.BOT_TOKEN || '';
-  // === sock5代理配置固定IP用 (如果不需要代理，留空) ===
+// === sock5代理配置固定IP用 (如果不需要代理，留空) ===
 const PROXY_URL = (process.env.PROXY_URL || "").trim();
 
 const { chromium } = require("playwright");
@@ -23,7 +23,7 @@ async function sendTelegramMessage(message) {
   });
 }
 
-(async () => {     
+(async () => {      
     const GREATHOST_URL = "https://greathost.es";    
     const LOGIN_URL = `${GREATHOST_URL}/login`;
     const HOME_URL = `${GREATHOST_URL}/dashboard`;
@@ -32,7 +32,17 @@ async function sendTelegramMessage(message) {
 
     // --- 修改开始：仅支持 SOCKS5 代理启动 ---
     const launchOptions = { headless: true, args: ['--no-sandbox'] };
-    const proxyData = PROXY_URL ? new URL(PROXY_URL) : null;
+    
+    // [优化] 兼容处理：防止用户忘了写 socks5:// 前缀导致解析崩溃
+    let proxyData = null;
+    if (PROXY_URL) {
+        try {
+            const safeUrl = PROXY_URL.startsWith('socks') ? PROXY_URL : `socks5://${PROXY_URL}`;
+            proxyData = new URL(safeUrl);
+        } catch (e) {
+            console.error("❌ PROXY_URL 格式错误:", e.message);
+        }
+    }
 
     if (proxyData) {        
         launchOptions.proxy = { server: `socks5://${proxyData.host}` };
@@ -139,7 +149,7 @@ async function sendTelegramMessage(message) {
     // === 3. 点击 Billing 图标进入账单页 ===
     console.log("🔍 点击 Billing 图标...");
     const billingBtn = page.locator('.btn-billing-compact').first();
-    const href = await billingBtn.getAttribute('href');
+    // const href = await billingBtn.getAttribute('href'); // 暂时未用到，注释掉保持整洁
     
     await Promise.all([
       billingBtn.click(),
@@ -162,12 +172,13 @@ async function sendTelegramMessage(message) {
     const serverId = page.url().split('/').pop() || 'unknown';
     console.log(`🆔 解析到 Server ID: ${serverId}`); 
 
-    // 定义通用报告函数
+    // 定义通用报告函数 (已优化：增加 proxyStatusTag)
     const getReport = (icon, title, hours, detail) => {
         return `${icon} <b>GreatHost ${title}</b>\n\n` +
                `🆔 <b>服务器ID:</b> <code>${serverId}</code>\n` +
                `⏰ <b>${title.includes('冷却') ? '累计时长' : '最新时长'}:</b> ${hours}h\n` +
                `🚀 <b>运行状态:</b> ${serverStarted ? '✅ 已触发启动' : '运行正常'}\n` +
+               `🌐 <b>连接模式:</b> ${proxyStatusTag}\n` + 
                `📅 <b>检查时间:</b> ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}\n` +
                `💡 <b>判定说明:</b> ${detail}`;
     };
@@ -189,10 +200,10 @@ async function sendTelegramMessage(message) {
     
     // === 9. 逻辑判定 ===
     console.log(`🆔 ID: ${serverId} | ⏰ 目前: ${beforeHours}h | 🔘 状态: ${btnContent.includes('Wait') ? '冷却中' : '可续期'}`);
-       
+        
     if (btnContent.includes('Wait')) {
         // 9.1. 提取数字：从 "Wait 23 min" 中提取出 "23"
-        const waitTime = btnContent.match(/\d+/)?.[0] || "??";          
+        const waitTime = btnContent.match(/\d+/)?.[0] || "??";           
         await sendTelegramMessage(getReport('⏳', '还在冷却中', beforeHours, `处于冷却中，剩 ${waitTime} 分钟`));
         return; 
     }
@@ -205,36 +216,34 @@ async function sendTelegramMessage(message) {
         await page.mouse.wheel(0, Math.floor(Math.random() * 200));
         console.log("👉 模拟页面滚动...");
         
-        // 2. 随机发呆：停顿 2-5 秒，模仿人类思考/寻找按钮的时间
+        // 2. 随机发呆：停顿 2-5 秒
         const thinkTime = Math.floor(Math.random() * 3000) + 2000;
         await page.waitForTimeout(thinkTime);
 
         // 3. 模拟鼠标平滑移动到按钮中心
         const box = await renewBtn.boundingBox();
         if (box) {
-            // 从当前位置平滑移动到按钮
             await page.mouse.move(
-                box.x + box.width / 2 + (Math.random() * 10 - 5), // 加点随机偏差
+                box.x + box.width / 2 + (Math.random() * 10 - 5), 
                 box.y + box.height / 2 + (Math.random() * 10 - 5), 
-                { steps: 15 } // 分15步移动，产生平滑轨迹
+                { steps: 15 } 
             );
             console.log("👉 鼠标平滑轨迹模拟完成");
         }
 
         // 4. 执行“三保险”点击
-        // 第一保险：物理点击 (增加随机按键时长)
+        // 第一保险：物理点击
         await renewBtn.click({ 
             force: true, 
-            delay: Math.floor(Math.random() * 100) + 100, // 模拟按下和弹起的间隔
+            delay: Math.floor(Math.random() * 100) + 100, 
             timeout: 5000 
         });
         console.log("👉 [1/3] 物理点击已执行");
 
-        // 第二保险：DOM 事件注入 (仅在物理点击可能失效时兜底)
+        // 第二保险：DOM 事件注入
         await page.evaluate(() => {
             const btn = document.querySelector('#renew-free-server-btn');
             if (btn) {
-                // 模拟更完整的点击链路
                 ['mouseenter', 'mousedown', 'mouseup', 'click'].forEach(evt => {
                     btn.dispatchEvent(new MouseEvent(evt, { bubbles: true, cancelable: true, view: window }));
                 });
@@ -255,18 +264,18 @@ async function sendTelegramMessage(message) {
         console.log("🚨 点击过程异常:", e.message);
     }
 
-    // === 11. 深度等待同步 (解决 99h/108h 刷新太快读不到新数据的问题) ===
+    // === 11. 深度等待同步 ===
     console.log("⏳ 正在进入 20 秒深度等待，确保后端写入数据...");
     await page.waitForTimeout(20000); 
 
-    // 抓取页面可能出现的报错文本（保留你的核心逻辑）
+    // 抓取页面可能出现的报错文本
     const errorMsg = await page.locator('.toast-error, .alert-danger, .toast-message').textContent().catch(() => '');
     if (errorMsg) console.log(`🔔 页面反馈信息: ${errorMsg}`);
 
     // 刷新页面同步最新状态
     console.log("🔄 正在刷新页面同步远程数据...");
     await page.reload({ waitUntil: "domcontentloaded", timeout: 25000 })
-              .catch(() => console.log("⚠️ 页面刷新超时，尝试直接读取数据..."));
+             .catch(() => console.log("⚠️ 页面刷新超时，尝试直接读取数据..."));
     
     // 刷新后再稳 3 秒
     await page.waitForTimeout(3000);
@@ -335,8 +344,8 @@ async function sendTelegramMessage(message) {
         tip = `检测到时长离奇变动：从 ${beforeHours}h 变为 ${afterHours}h。建议人工检查。`;
     }
 
-    // === 14. 发送正常消息 ===
-    await sendTelegramMessage(getReport(statusIcon, statusTitle, afterHours, tip));   
+    // === 14. 发送正常消息 (已自动包含 proxyStatusTag) ===
+    await sendTelegramMessage(getReport(statusIcon, statusTitle, afterHours, tip));    
 
   } catch (err) {
     console.error("❌ 脚本运行崩溃:", err.message);
@@ -350,7 +359,7 @@ async function sendTelegramMessage(message) {
             `📅 <b>检查时间:</b> ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}`;
         
         await sendTelegramMessage(errorDetail);        
-    }   
+    }    
 
   } finally {
     
