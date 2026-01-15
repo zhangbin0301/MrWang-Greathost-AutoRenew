@@ -49,27 +49,28 @@ async function sendTelegramMessage(message) {
     try {
         console.log(`🚀 任务启动 | 引擎: Firefox | ${proxyStatusTag}`);
         
-        // 核心修改：只在 launch 传 server，不在这里传账号密码防止报错
-        browser = await firefox.launch({
-            headless: true,
-            proxy: proxyData ? { server: `socks5://${proxyData.host}` } : undefined
-        });
+        // 1. 启动浏览器（不带参数）
+        browser = await firefox.launch({ headless: true });
 
-        const context = await browser.newContext({
+        // 2. 在创建上下文时，【一次性】注入代理服务器和认证信息
+        // 这是 Playwright Node.js 官方文档定义的标准 SOCKS5 认证方式
+        const contextOptions = {
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0',
             viewport: { width: 1280, height: 720 },
             locale: 'es-ES'
-        });
+        };
 
-        // 核心修改：使用正确的 setCredentials 注入账号密码
-        if (proxyData && proxyData.username) {
-            await context.setCredentials({
-                username: proxyData.username,
-                password: proxyData.password
-            });
-            console.log("🔑 代理凭据注入成功");
+        if (proxyData) {
+            contextOptions.proxy = {
+                server: `socks5://${proxyData.host}`,
+                username: proxyData.username || '',
+                password: proxyData.password || ''
+            };
         }
 
+        const context = await browser.newContext(contextOptions);
+
+        // 3. 创建页面
         const page = await context.newPage();
 
         // --- 完整保留你原来的指纹抹除 ---
