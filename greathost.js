@@ -30,42 +30,46 @@ async function sendTelegramMessage(message) {
 
     let proxyStatusTag = "🌐 直连模式";
 
-    // --- 修改开始：正确配置 SOCKS5 (移至 Launch 阶段) ---
+    // --- 修改开始：SOCKS5 最终修正版 ---
     const launchOptions = { headless: true, args: ['--no-sandbox'] };
     
-    // 1. 解析代理配置
-    let proxyData = null;
+    let proxyHostDisplay = "";
+
     if (PROXY_URL) {
         try {
-            // 确保有协议头以便 URL 类解析
-            const safeUrl = PROXY_URL.startsWith('socks') ? PROXY_URL : `socks5://${PROXY_URL}`;
-            proxyData = new URL(safeUrl);
+            // 1. 强制补全协议头，防止 new URL 报错
+            const rawUrl = PROXY_URL.startsWith('socks') ? PROXY_URL : `socks5://${PROXY_URL}`;
+            const urlObj = new URL(rawUrl);
+
+            // 2. 核心修复：Chromium SOCKS5 必须把账号密码放在 server 字符串里
+            // 格式必须是: socks5://username:password@ip:port
+            const finalProxyUrl = `socks5://${urlObj.username}:${urlObj.password}@${urlObj.host}`;
+            
+            launchOptions.proxy = { 
+                server: finalProxyUrl 
+                // ❌ 绝对不要在这里写 username 和 password，否则会报错
+            };
+
+            proxyHostDisplay = urlObj.host; // 仅用于日志显示
+            proxyStatusTag = `🔒 代理模式 (${proxyHostDisplay})`;
+            console.log(`🌍 [Config] 代理配置已构建: socks5://***:***@${urlObj.host}`);
+
         } catch (e) {
-            console.error("❌ PROXY_URL 格式错误:", e.message);
+            console.error("❌ PROXY_URL 解析严重错误:", e.message);
         }
     }
 
-    // 2. 将代理配置注入到 launchOptions (关键点：在这里进行认证)
-    if (proxyData) {        
-        launchOptions.proxy = { 
-            server: `socks5://${proxyData.host}`,
-            username: proxyData.username,
-            password: proxyData.password
-        };
-        proxyStatusTag = `🔒 代理模式 (${proxyData.host})`;
-    }
-
-    // 3. 启动浏览器 (携带完整的代理认证信息)
     const browser = await chromium.launch(launchOptions);
 
-    // 4. 创建上下文 (这里不再传 proxy 参数，它会自动继承浏览器的代理设置)
+    // 3. 上下文配置 (不再传入任何 proxy 参数，自动继承 launch 配置)
     const context = await browser.newContext({
         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         viewport: { width: 1280, height: 720 },
-        locale: 'es-ES'        
+        locale: 'es-ES'
     });
 
     const page = await context.newPage();
+    
       
   try {
     console.log(`🚀 任务启动 | ${proxyStatusTag}`);
