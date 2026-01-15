@@ -76,22 +76,21 @@ def check_proxy_ip(driver):
 def get_browser():
     sw_options = {'proxy': {'http': PROXY_URL, 'https': PROXY_URL, 'no_proxy': 'localhost,127.0.0.1'}}
     chrome_options = Options()  
+    # 基础防封参数
+    chrome_options.add_argument("--headless=new") # GitHub Actions 必须带这个，除非用 xvfb
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    chrome_options.add_experimental_option('useAutomationExtension', False)
-    chrome_options.add_argument("--headless=new")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--window-size=1920,1080")    
+    chrome_options.add_experimental_option('useAutomationExtension', False)    
+    # 模拟真实硬件特征
+    chrome_options.add_argument("--window-size=1920,1080")
+    chrome_options.add_argument("--lang=en-US")
     chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+
     driver = webdriver.Chrome(options=chrome_options, seleniumwire_options=sw_options)
-        
+
+    # 抹除核心指纹
     driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
-        "source": """
-            Object.defineProperty(navigator, 'webdriver', {
-              get: () => undefined
-            })
-        """
+        "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
     })
     
     return driver
