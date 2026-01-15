@@ -18,8 +18,7 @@ PASSWORD = os.getenv("GREATHOST_PASSWORD") or ""
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN") or ""
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID") or ""
 # 代理配置 (使用 Selenium-Wire 解决 SOCKS5 认证)
-PROXY_URL = "socks5://admin123:admin321@138.68.253.225:30792"
-PROXY_UR = os.getenv("PROXY_UR") or ""
+PROXY_URL = os.getenv("PROXY_UR") or ""
 
 def send_telegram(message):
     """复刻 JS: sendTelegramMessage"""
