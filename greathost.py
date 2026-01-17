@@ -181,6 +181,8 @@ def run_task():
     after_hours = 0
     driver = None
     server_started = False
+    status_text = "Unknown"
+    status_display = "🟢 运行正常"
     
     try:
         driver = get_browser()        
@@ -195,7 +197,7 @@ def run_task():
         # 1. 输入邮箱
         email_input = wait.until(EC.presence_of_element_located((By.NAME, "email")))
         try:
-            email_input.click()  # 聚焦
+            safe_click(driver, email_input)  # 聚焦
         except Exception:
             pass
         time.sleep(0.3)
@@ -204,7 +206,7 @@ def run_task():
         # 2. 输入密码
         password_input = wait.until(EC.presence_of_element_located((By.NAME, "password")))
         try:
-            password_input.click()
+            safe_click(driver, password_input)
         except Exception:
             pass
         time.sleep(0.4)
@@ -234,8 +236,9 @@ def run_task():
         try:
             status_indicator = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'server-status-indicator')))
             status_text = status_indicator.get_attribute('title') or 'unknown'
-            status_class = status_indicator.get_attribute('class') or ''          
-            print(f"📡 实时状态抓取成功: [{status_text}] (Class: {status_class})")
+            icon, name = STATUS_MAP.get(status_text, ["🟢", "运行正常"])
+            status_display = f"{icon} {name}" 
+            print(f"📡 实时状态抓取成功: {status_display}")
             
            # 判定是否需要启动
             if any(x in status_text.lower() for x in ['stopped', 'offline']):
@@ -245,8 +248,9 @@ def run_task():
                     # 模拟真人点击：先滚动再点
                     driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", start_btn)
                     time.sleep(1)
-                    start_btn.click()
+                    safe_click(driver, start_btn)
                     server_started = True
+                    status_display = f"✅ 已触发启动 ({status_display})"
                     print("✅ 启动指令已发出")
                 except: pass
         except Exception as e:
@@ -262,9 +266,8 @@ def run_task():
             time.sleep(random.uniform(1, 2))
             
             # 产生一个 -5 到 +5 像素的随机偏移量
-            offset_x = random.randint(-5, 5)
-                        
-            from selenium.webdriver.common.action_chains import ActionChains
+            offset_x = random.randint(-5, 5)         
+            
             actions = ActionChains(driver)
             actions.move_to_element_with_offset(billing_btn, offset_x, offset_y).click().perform()
             
@@ -285,7 +288,7 @@ def run_task():
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", view_details_btn)
             time.sleep(random.uniform(1, 3))
             
-            view_details_btn.click()
+            safe_click(driver, view_details_btn)
             print("✅ 已进入详情页，等待3秒加载数据...")
             time.sleep(3)
         except Exception as e:
@@ -321,15 +324,6 @@ def run_task():
             m = re.search(r'\d+', btn_content)
             wait_time = m.group(0) if m else "??"
             
-            # 直接使用全局变量 STATUS_MAP
-            st = status_text if 'status_text' in locals() and status_text else "Unknown"
-            icon, name = STATUS_MAP.get(st, ["⚪", st])
-            
-            if server_started:
-                status_display = f"✅ 已触发启动 ({icon} {name})"
-            else:
-                status_display = f"{icon} 运行正常"
-
             message = (f"⏳ <b>GreatHost 还在冷却中</b>\n\n"                       
                        f"🆔 <b>服务器ID:</b> <code>{server_id}</code>\n"
                        f"⏰ <b>冷却时间:</b> {wait_time} 分钟\n"
@@ -347,28 +341,16 @@ def run_task():
      # === 10. 执行续期 (模拟物理动作) ===
         print("⚡ 启动高仿真续期点击...")
         try:
-            from selenium.webdriver.common.action_chains import ActionChains
-            
-            # 1. 先平滑滚动，让按钮出现在屏幕中间
-            driver.execute_script("arguments[0].scrollIntoView({block: 'center', behavior: 'smooth'});", renew_btn)
-            time.sleep(random.uniform(1, 2))
-
-            # 2. 模拟鼠标平滑移动到按钮的一个随机位置点
+            # 1. 物理模拟点击 (防检测优先)
             actions = ActionChains(driver)
-            # 在按钮中心点附近随机偏离几像素，模拟人类的不精确性
-            off_x = random.randint(-10, 10)
-            off_y = random.randint(-5, 5)
-            
-            actions.move_to_element_with_offset(renew_btn, off_x, off_y)
-            actions.pause(random.uniform(0.2, 0.5)) # 模拟人类点击前的短暂迟疑
-            actions.click()
-            actions.perform()
-            
+            off_x, off_y = random.randint(-10, 10), random.randint(-5, 5)
+            actions.move_to_element_with_offset(renew_btn, off_x, off_y).pause(0.3).click().perform()
             print(f"👉 物理模拟点击成功 (偏移: {off_x}, {off_y})")
+           
         except Exception as e:
-            print(f"🚨 物理点击失败: {e}")
-            # 万不得已时，在这里才考虑启用 JS 点击作为“保命”手段
-            # driver.execute_script("arguments[0].click();", renew_btn)
+            print(f"🚨 物理点击失败，尝试安全点击兜底: {e}")
+            # 2. 如果物理点击失败，调用你的 safe_click 确保任务完成
+            safe_click(driver, renew_btn)
 
         # === 11. 深度等待同步 (JS 1:1) ===
         print("⏳ 正在进入 20 秒深度等待，确保后端写入数据...")
@@ -424,8 +406,7 @@ def run_task():
         is_maxed_out = ("5 días" in error_msg) or (before_hours >= 120) or (after_hours == before_hours and after_hours >= 108)
 
         # 🚀 统一构造服务器状态显示文案 (使用全局 STATUS_MAP)
-        if server_started:
-            # 使用折返抓取的实时状态
+        if server_started and 'final_status_text' in locals():
             icon, name = STATUS_MAP.get(final_status_text, ["❓", final_status_text])
             status_display = f"✅ 已触发启动 ({icon} {name})"
         else:
