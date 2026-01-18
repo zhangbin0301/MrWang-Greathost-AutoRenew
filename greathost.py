@@ -202,14 +202,18 @@ def get_hours(driver, selector="#accumulated-time"):
     return 0, (text or "").strip()
 
 def get_error_msg(driver):
-    try: return driver.find_element(By.CSS_SELECTOR, '.toast-error, .alert-danger, .toast-message').text or ""
+    js = "return (document.querySelector('.toast-error, .alert-danger, .toast-message, .iziToast-message') || {}).innerText || ''"
+    try: return driver.execute_script(js).strip()
     except: return ""
 
 def renew_click(driver, wait):
-    perform_step(driver, wait, "Renew button", (By.ID,'renew-free-server-btn'))
-    time.sleep(2); msg = get_error_msg(driver) # 点击后只等 2s 看有没有报错提示
-    # 删掉原来的 time.sleep(20) 和 driver.refresh()
-    return msg
+    perform_step(driver, wait, "Renew button", (By.ID,'renew-free-server-btn'))    
+    end_time = time.time() + 3.0
+    while time.time() < end_time:
+        msg = get_error_msg(driver)
+        if msg: return msg  # 抓到立刻撤
+        time.sleep(random.uniform(0.3, 0.6))
+    return ""
 
 def confirm_and_start(driver, wait):
     final = "运行正常"; started = False
@@ -232,11 +236,8 @@ def run_task():
     time.sleep(random.randint(1,60))
     driver = None; server_id = "未知"; before = 0; after = 0; status_display = "🟢 运行正常"
     try:
-        # 核心修改：确保 get_browser 内部能处理 PROXY_URL 为空的情况
-        # 如果 get_browser 是你定义的，请确保它内部有 if PROXY_URL: options.add_argument... 的判断
         driver = get_browser() 
         
-        # 如果代理为空，跳过预检（避免在直连模式下报代理预检失败）
         if globals().get('PROXY_URL'):
             check_proxy_ip(driver)
         
@@ -275,7 +276,7 @@ def run_task():
         has_limit_msg = "5 días" in err_msg
         has_reached_threshold = (before > 108 and after == before)
         is_maxed = has_limit_msg or has_reached_threshold          
-        # 后台打印判定细节
+        
         if is_maxed:
             reason = "抓到 '5 días' 报错文案" if has_limit_msg else "触发数值保底逻辑 (before > 108)"
             print(f"DEBUG: 判定为上限 - 依据: {reason}")  
