@@ -243,20 +243,29 @@ def run_task():
         after, _ = get_hours(driver)
         print("After hours:", after)
         
-        if after == before and before >= 109:
-            is_maxed = True
-            err_msg = err_msg or "接近或达到 5天上限，拒绝续期"
-            
+        if after == before:
+                print("After == Before，可能后台写入延迟，等待 15s 再刷新一次")
+                time.sleep(15)
+                try:
+                        driver.refresh()
+                except:
+                        print("Refresh failed")
+                        time.sleep(2)
+                after, _ = get_hours(driver)
+                print("After hours (二次读取):", after)
+
+        print(f"Final after hours used for判定: {after}")
+
         final_status, started_flag = confirm_and_start(driver, wait)
         if started_flag:
-            icon, name = STATUS_MAP.get(final_status, ["❓", final_status])
-            status_display = f"✅ 已触发启动 ({icon} {name})"
+                icon, name = STATUS_MAP.get(final_status, ["❓", final_status])
+                status_display = f"✅ 已触发启动 ({icon} {name})"
         else:
-            icon, name = STATUS_MAP.get(final_status, ["🟢", "运行正常"])
-            status_display = f"{icon} {name}"
+                icon, name = STATUS_MAP.get(final_status, ["🟢", "运行正常"])
+                status_display = f"{icon} {name}"
 
         is_success = after > before
-        is_maxed = ("5 días" in err_msg) or (before >= 120) or (after == before and after >= 108)
+        is_maxed = ("5 días" in err_msg) or (before >= 120) or (after == before and before >= 108)
 
         if is_success:
             fields = [("🆔","ID",f"<code>{server_id}</code>"),("⏰","增加时间",f"{before} ➔ {after}h"),("🚀","服务器状态",status_display)]
