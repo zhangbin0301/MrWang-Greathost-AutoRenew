@@ -20,11 +20,11 @@ TARGET_NAME_CONFIG = os.getenv("TARGET_NAME", "loveMC")
 
 # 状态映射表
 STATUS_MAP = {
-    "Running": ["🟢", "运行中"],
-    "Starting": ["🟡", "启动中"],
-    "Stopped": ["🔴", "已关机"],
-    "Offline": ["⚪", "离线"],
-    "Suspended": ["🚫", "已暂停/封禁"]
+    "Running": ["🟢", "Running"],
+    "Starting": ["🟡", "Starting"],
+    "Stopped": ["🔴", "Stopped"],
+    "Offline": ["⚪", "Offline"],
+    "Suspended": ["🚫", "Suspended"]
 }
 
 # ================= 工具函数 =================
