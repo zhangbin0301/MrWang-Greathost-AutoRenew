@@ -113,9 +113,11 @@ def run_task():
         status_disp = f"{icon} {status_name}"
         print(f"📋 状态核对: {target_name} | {status_disp}")
 
-# 4. 时间检查与冷却判定
+        # 4. 时间检查与冷却判定
         driver.get(f"https://greathost.es/contracts/{server_id}")
         time.sleep(2)
+
+        print(f"DEBUG: 原始合同数据 -> {str(contract_data)[:100]}...")
         
         # 【修正点】改用 main (2).py 验证过的 renewal 接口，并增加 .get('contract') 层级
         contract_data = fetch_api(driver, f"/api/renewal/contracts/{server_id}")
