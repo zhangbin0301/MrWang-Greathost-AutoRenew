@@ -116,11 +116,11 @@ def run_task():
         # 4. 时间检查与冷却判定
         driver.get(f"https://greathost.es/contracts/{server_id}")
         time.sleep(2)
-
-        print(f"DEBUG: 原始合同数据 -> {str(contract_data)[:100]}...")
         
         # 【修正点】改用 main (2).py 验证过的 renewal 接口，并增加 .get('contract') 层级
         contract_data = fetch_api(driver, f"/api/renewal/contracts/{server_id}")
+
+        print(f"DEBUG: 原始合同数据 -> {str(contract_data)[:100]}...")
         # 兼容性处理：优先找 contract 里的数据，找不到则看顶层
         renewal_info = contract_data.get('contract', {}).get('renewalInfo') or contract_data.get('renewalInfo', {})
         before_h = calculate_hours(renewal_info.get('nextRenewalDate'))
