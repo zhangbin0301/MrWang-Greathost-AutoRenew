@@ -176,7 +176,7 @@ def run_task():
                 ("🆔", "ID", f"<code>{server_id}</code>"),
                 ("⏰", "剩余时间", f"{after_h}h"),
                 ("🚀", "服务器状态", status_disp),
-                ("💡", "提示", "已近120h上限，暂无需续期。"),
+                ("💡", "提示", res_message),
                 ("🌐", "登入 IP", f"<code>{login_ip}</code>")
             ])
         else:
@@ -184,12 +184,12 @@ def run_task():
                 ("📛", "服务器名称", target_name),
                 ("🆔", "ID", f"<code>{server_id}</code>"),
                 ("⏰", "剩余时间", f"{before_h}h"),
-                ("💡", "提示", f"时间未增加: {renew_res.get('message','未知错误')}")
+                ("💡", "提示", res_message)
             ])
 
     except Exception as e:
         print(f"🚨 运行异常: {e}")
-        send_notice("error", [("📛", "目标", target_name), ("❌", "故障", f"<code>{str(e)[:100]}</code>")])
+        send_notice("error", [("📛", "服务器名称", target_name), ("❌", "故障", f"<code>{str(e)[:100]}</code>")])
     finally:
         if driver: driver.quit()
 
