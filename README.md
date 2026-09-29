@@ -1,13 +1,13 @@
 # GreatHost 自动续期状态
 
-🎉 **GreatHost 续期成功**
+🚨 **GreatHost 脚本报错**
 
 📛 服务器名称: loveMC
-🆔 ID: `ea53c54f-bc21-400d-8bcf-cc302ee355bc`
-⏰ 增加时间: 77 ➔ 89h
-🚀 服务器状态: ❓ unknown
-💡 提示: Servidor gratuito renovado correctamente
-🌐 落地 IP: `132.196.83.172`
-📅 时间: 2026/09/29 03:10:39
+❌ 故障: `TimeoutException: Message: script timeout
+  (Session info: chrome=153.0.8010.52)
+Stacktrace:
+#0 0x5630699c09fa &lt;unk`
+🌐 代理状态: 已尝试直连/Stealth
+📅 时间: 2026/09/29 11:59:36
 
-> 最近更新: 2026/09/29 03:10:39
+> 最近更新: 2026/09/29 11:59:36
